@@ -1,0 +1,148 @@
+---------------------------
+1st number, x:0223245 
+2nd number, y: 1234560
+Intermediate Values of A, B after partition:
+x:0223245  a : 223 b : 245
+y: 1234560 c : 1234 d : 560
+---------------------------
+1st number, x:0223 
+2nd number, y: 1234
+Intermediate Values of A, B after partition:
+x:0223  a : 2 b : 23
+y: 1234 c : 12 d : 34
+---------------------------
+1st number, x:02 
+2nd number, y: 12
+Intermediate Values of A, B after partition:
+x:02  a : 0 b : 2
+y: 12 c : 1 d : 2
+---------------------------
+Intermediate Product: 02 x 12 = 24
+-----------------
+1st number, x:23 
+2nd number, y: 34
+Intermediate Values of A, B after partition:
+x:23  a : 2 b : 3
+y: 34 c : 3 d : 4
+---------------------------
+Intermediate Product: 23 x 34 = 782
+-----------------
+1st number, x:25 
+2nd number, y: 46
+Intermediate Values of A, B after partition:
+x:25  a : 2 b : 5
+y: 46 c : 4 d : 6
+---------------------------
+1st number, x:07 
+2nd number, y: 10
+Intermediate Values of A, B after partition:
+x:07  a : 0 b : 7
+y: 10 c : 1 d : 0
+---------------------------
+Intermediate Product: 07 x 10 = 70
+-----------------
+Intermediate Product: 25 x 46 = 1150
+-----------------
+Intermediate Product: 0223 x 1234 = 275182
+-----------------
+1st number, x:245 
+2nd number, y: 560
+Intermediate Values of A, B after partition:
+x:245  a : 24 b : 5
+y: 560 c : 56 d : 0
+---------------------------
+1st number, x:24 
+2nd number, y: 56
+Intermediate Values of A, B after partition:
+x:24  a : 2 b : 4
+y: 56 c : 5 d : 6
+---------------------------
+1st number, x:06 
+2nd number, y: 11
+Intermediate Values of A, B after partition:
+x:06  a : 0 b : 6
+y: 11 c : 1 d : 1
+---------------------------
+Intermediate Product: 06 x 11 = 66
+-----------------
+Intermediate Product: 24 x 56 = 1344
+-----------------
+1st number, x:29 
+2nd number, y: 56
+Intermediate Values of A, B after partition:
+x:29  a : 2 b : 9
+y: 56 c : 5 d : 6
+---------------------------
+1st number, x:11 
+2nd number, y: 11
+Intermediate Values of A, B after partition:
+x:11  a : 1 b : 1
+y: 11 c : 1 d : 1
+---------------------------
+Intermediate Product: 11 x 11 = 121
+-----------------
+Intermediate Product: 29 x 56 = 1624
+-----------------
+Intermediate Product: 245 x 560 = 137200
+-----------------
+1st number, x:0468 
+2nd number, y: 1794
+Intermediate Values of A, B after partition:
+x:0468  a : 4 b : 68
+y: 1794 c : 17 d : 94
+---------------------------
+1st number, x:04 
+2nd number, y: 17
+Intermediate Values of A, B after partition:
+x:04  a : 0 b : 4
+y: 17 c : 1 d : 7
+---------------------------
+Intermediate Product: 04 x 17 = 68
+-----------------
+1st number, x:68 
+2nd number, y: 94
+Intermediate Values of A, B after partition:
+x:68  a : 6 b : 8
+y: 94 c : 9 d : 4
+---------------------------
+1st number, x:14 
+2nd number, y: 13
+Intermediate Values of A, B after partition:
+x:14  a : 1 b : 4
+y: 13 c : 1 d : 3
+---------------------------
+Intermediate Product: 14 x 13 = 182
+-----------------
+Intermediate Product: 68 x 94 = 6392
+-----------------
+1st number, x:072 
+2nd number, y: 111
+Intermediate Values of A, B after partition:
+x:072  a : 7 b : 2
+y: 111 c : 11 d : 1
+---------------------------
+1st number, x:07 
+2nd number, y: 11
+Intermediate Values of A, B after partition:
+x:07  a : 0 b : 7
+y: 11 c : 1 d : 1
+---------------------------
+Intermediate Product: 07 x 11 = 77
+-----------------
+1st number, x:09 
+2nd number, y: 12
+Intermediate Values of A, B after partition:
+x:09  a : 0 b : 9
+y: 12 c : 1 d : 2
+---------------------------
+Intermediate Product: 09 x 12 = 108
+-----------------
+Intermediate Product: 072 x 111 = 7992
+-----------------
+Intermediate Product: 0468 x 1794 = 839592
+-----------------
+Intermediate Product: 0223245 x 1234560 = 275609347200
+-----------------
+
+ Result:> 223245 x 1234560 = 275609347200
+--------------------

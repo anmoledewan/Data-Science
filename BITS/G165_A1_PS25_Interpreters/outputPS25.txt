@@ -1,0 +1,115 @@
+
+--------Function showAll--------
+Total no. of candidates: 12
+Total no. of languages: 10
+
+List of candidates: 
+Surya
+Sanjay
+Parul
+Rohan
+Amjad
+Paul
+Manasa
+Rahul
+Venkat
+Nisha
+Zubin
+Harish
+
+List of languages: 
+Marathi
+Punjabi
+English
+Telugu
+Gujarati
+Bengali
+Kannada
+Malayalam
+Tamil
+Hindi
+
+-----------------------------------------
+
+
+--------Function displayHireList--------
+No of candidates required to cover all languages: 4
+Venkat / English / Kannada / Tamil / Telugu
+Paul / Malayalam / Marathi / Tamil / Telugu
+Harish / Punjabi / Gujarati / English / Hindi
+Nisha / Bengali / English / Marathi / Hindi
+-----------------------------------------
+
+
+--------Function displayCandidates --------
+List of Candidates who can speak Hindi:
+Harish
+Nisha
+Parul
+Amjad
+Zubin
+Manasa
+-----------------------------------------
+
+
+--------Function displayCandidates --------
+List of Candidates who can speak Tamil:
+Venkat
+Rohan
+Paul
+Surya
+-----------------------------------------
+
+
+--------Function findDirectTranslator --------
+Language A: English
+Language B: Malayalam
+Direct Translator: No.
+-----------------------------------------
+
+
+--------Function findDirectTranslator --------
+Language A: Hindi
+Language B: Gujarati
+Direct Translator: Yes, Harish, Amjad can translate.
+-----------------------------------------
+
+
+--------Function findTransRelation --------
+Language A: English
+Language B: Malayalam
+Related: Yes, English > Manasa > Punjabi > Harish > Hindi > Nisha > Marathi > Paul > Telugu > Rohan > Tamil > Surya > Malayalam
+
+-----------------------------------------
+
+
+--------Function findTransRelation --------
+Language A: Malayalam
+Language B: Gujarati
+Related: Yes, Malayalam > Paul > Telugu > Rohan > Tamil > Venkat > English > Manasa > Punjabi > Harish > Hindi > Amjad > Gujarati
+
+-----------------------------------------
+
+
+--------Function findDirectTranslator --------
+Language A: Hindi
+Language B: Gujarati
+Direct Translator: Yes, Harish, Amjad can translate.
+-----------------------------------------
+
+
+--------Function displayHireList--------
+No of candidates required to cover all languages: 4
+Venkat / English / Kannada / Tamil / Telugu
+Paul / Malayalam / Marathi / Tamil / Telugu
+Harish / Punjabi / Gujarati / English / Hindi
+Nisha / Bengali / English / Marathi / Hindi
+-----------------------------------------
+
+
+--------Function displayCandidates --------
+List of Candidates who can speak Telugu:
+Paul
+Rohan
+Venkat
+-----------------------------------------
