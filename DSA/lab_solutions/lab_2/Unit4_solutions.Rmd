@@ -1,0 +1,111 @@
+---
+title: "Lab2"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(ggplot2)
+```
+
+## Preparation
+
+```{r preparation}
+# Read the data
+data <- read.csv('../data/fifa.csv')
+
+# The following code block converts 'Value' to numeric and the same unit.
+data$Value <- as.character(data$Value)
+data$Multiplier <- ifelse(
+  is.na(data$Value), 0, ifelse(
+    endsWith(data$Value, "K"), 1, ifelse(
+      endsWith(data$Value, "M"), 1000, 1
+    )
+  )
+)
+extract_numeric <- function(string){
+  x <- gsub("[^0-9\\.\\-]", "", string)
+}
+data$Value <- sapply(data$Value, extract_numeric)
+data$Value <- as.numeric(data$Value)
+data$Value <- data$Value * data$Multiplier
+
+```
+
+## Question 1
+**For this exercise, let's filter data by Value >= $50K. Also, let's add a column that represents the log of Value column (we will refer to this attribute as ‘log_Value’). Now let’s plot a boxplot between the log_Value and Age – what can you tell about the relationship between Value and Age of a player?**
+
+```{r question1}
+# Filter the data by Value >= $50K
+data_df <- data[data$Value >= 50,]
+data_df$log_value <- log(data_df$Value)
+# draw the boxplot
+data_df$Age <- as.factor(data_df$Age)
+g <- ggplot(data_df, aes(x = Age, y = log_value)) +
+  geom_boxplot() + theme_void()
+g
+```
+
+* As intuitively expected, the value of players generally peak at age of 23 - 31. For older age groups or much younger age groups, the value generally decreases.  
+* One sensible choice to make use of this observation would be to group ages to different categories - such as 'young', 'mid', 'old'  
+* It is important to visualize to get a sense of the relationship between the predictor and response. In this case, in the context of linear models it would be incorrect to use Age in its raw form as a predictor since the relationship with the response variable is not monotonic 
+
+## Question 2
+
+**Let’s create a categorical variable (which we will refer to as ‘age_cat’ that splits Age to 3 categories – 22 and under / 23 – 31 / 32 and over. Let’s regress ‘log_Value’ on ‘age_cat’ and show the coefficients. Can we say that the addition of the ‘age_cat’ variables is statistically significant? (hint: ANOVA F-stat)**
+```{r question2}
+# create a categorical variable column (called 'age_cat') that splits the Age to 3 categories - 22 and under / 23 - 31 / 32 and over)
+data_df$Age <- as.numeric(levels(data_df$Age))[data_df$Age]
+
+data_df$Age_cat <- cut(data_df$Age, c(0, 22, 31, 50))
+
+
+# Fit the linear model
+fit <- lm(log_value ~ Age_cat, data = data_df)
+coef(fit)
+summary(fit)
+```
+
+* Intercept: the mean log value of the age group of 22 and under  
+* beta1: the additional mean log value of the age group of 23 - 31 over the 22 and under age group / it's intuitive that this beta1 is relatively large compared to beta2  
+* beta2: the additional mean log value of the age group of 32 and over over the 22 and under age group  
+* Yes, the F-stat is provided in the summary (p-value for F-stat is 0)  
+
+## Question 3
+**In addition to the previous model's predictors let's add 'BallControl' and 'Finishing' as additional predictors and again fit OLS. Do you see anything unintuitive about the coefficient on 'Finishing'?** 
+```{r question4}
+# Add the Finishing term and fit the linear model
+fit3 <- lm(log_value ~ Age_cat + BallControl + Finishing, data = data_df)
+coef(fit3)
+summary(fit3)
+```
+* Result of OLS shown below  
+* It is unintuitive that we see a negative coefficient assigned to the Finishing skill (so with all other variables constant, the model says that as 'Finishing' skill increases, the log value would decrease. There could be several different causes of this:
++ Finishing skill matters for specific types of players - particularly the attackers -> we will create interaction features in the next question (domain knowledge would be important here)
++ Finishing skill may be highly correlated with other features in the regression. Therefore, when we look at the relationship between log value vs. Finishing skill, with the effects from the other features taken out (from the log value and from the Finishing skill), the residual relationship might be negatively correlated.
++ Coefficient is not statistically significant (due to issues such as multi-collinearity)
+
+
+
+## Question 4
+**Perhaps the Finishing skill has more meaning if the player is in attacking position. Let's add another categorical variable called 'attacking_pos' and assign a value of 1 if position is in [ST/CF/RF/LF/CAM/RAM/LAM] and 0 otherwise** 
+```{r question51}
+# Create the categorical variable
+position <- c('ST','CF','RF','LF','CAM','RAM','LAM')
+data_df$attacking_pos <- ifelse(data_df$Position %in% position, 1 , 0)
+
+```
+** Let's reuse the previous OLS relationship. But in addition to the 'Finishing' predictor let's also add the 'attacking_pos' cateogorical variable and the interaction term between 'attacking_pos' and 'Finishing'. Please show the coefficients. Also, what are the meanings of these added coefficients?**  
+```{r question52}
+# Fit the linear model
+fit4 <- lm(log_value ~ Age_cat + BallControl + attacking_pos * Finishing, data = data_df)
+coef(fit4)
+summary(fit4)
+```
+* attacking_pos coefficient: the additional log value amount of player in attacking position vs. non attacking position (when all other variables stay constant)  
+* Finishing coefficient: the increase in log value as finishing skill increases for a non-attacking player  
+* attacking_pos:Finishing coefficient: the additional increase (additional to the 'Finishing' coefficient above) in log value as finishing skill increases for an attacking player  
+

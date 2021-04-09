@@ -1,0 +1,202 @@
+---
+title: "Week2"
+output: html_document
+---
+
+```{r setup2, echo = TRUE, results = "hide"}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(ggplot2)
+library(dplyr)
+library(reshape)
+library(gridExtra)
+```
+
+## How does the distribution of players overall score differ from country to country?  
+
+```{r 1}
+data <- read.csv('../data/fifa.csv')
+top_ten_nation <- names(sort(table(data$Nationality), decreasing=TRUE)[1:10])
+data_top_ten_nation <- data[data$Nationality %in% top_ten_nation,]
+
+ggplot(data_top_ten_nation, aes(x = Overall, y =..density..)) +
+  geom_histogram(binwidth = 2) +
+  facet_wrap( ~ Nationality, ncol=5) + 
+  geom_line(color = 'red', stat = 'density')
+```
+```{r 12}
+top_five_nation <- top_ten_nation[1:5]
+data_top_five_nation <- data[data$Nationality %in% top_five_nation,]
+
+ggplot(data = data_top_five_nation) +
+  geom_density(aes(x = Overall, group = Nationality, color = Nationality))
+``` 
+  
+* The distribution of players overall score for each of the top 10 countries has a bell shape.  
+* The density curve of France is flatter than that of Brazil, suggesting a larger variance.
+* The distribution from Spain is positive skewed. On the contrary, the distribution from England and Argentina are negative skewed.
+* From the second graph, we can see that the density curve of Spain is to the right of the density curve of England, suggesting that Spain has better players than England.
+
+## How does the distribution of players potential score differ from country to country?
+
+```{r 2}
+ggplot(data_top_ten_nation, aes(x= Potential, y =..density..)) +
+  geom_histogram(binwidth=2) +
+  facet_wrap( ~ Nationality, ncol=5) +
+  geom_line(color = 'red', stat = 'density')
+```
+```{r 22}
+ggplot(data = data_top_five_nation) +
+  geom_density(aes(x = Potential, group = Nationality, color = Nationality))
+```
+  
+* All distributions have the bell shape.  
+* Most distributions are positive skewed.  
+* Players from Argentina, Spain and France tend to have more potential then players from England and Germany.  
+
+## How do the wages of players compare across top clubs?
+```{r 3}
+data$Value <- as.character(data$Value)
+data$value_multiplier <- ifelse(
+  is.na(data$Value), 0, ifelse(
+    endsWith(data$Value, "K"), 1, ifelse(
+      endsWith(data$Value, "M"),1000,1
+    )
+  )
+)
+extract_numeric <- function(string){
+  x <- gsub("[^0-9\\.\\-]", "", string)
+}
+data$Value_trans <- sapply(data$Value, extract_numeric)
+data$Value_trans <- as.numeric(data$Value_trans)
+data$Value_trans <- data$Value_trans * data$value_multiplier
+
+data$Wage <- as.character(data$Wage)
+data$wage_multiplier <-  ifelse(
+  is.na(data$Wage), 0, ifelse(
+    endsWith(data$Wage, "K"), 1, ifelse(
+      endsWith(data$Wage, "M"), 1000, 1
+    )
+  )
+)
+data$Wage_trans <- sapply(data$Wage, extract_numeric)
+data$Wage_trans <- as.numeric(data$Wage_trans)
+data$Wage_trans <- data$Wage_trans * data$wage_multiplier
+
+club_overall <- data %>%
+  group_by(Club) %>%
+  summarise(value = sum(Overall))
+
+top_ten_clubs <- club_overall[order(club_overall$value,decreasing = TRUE),][c(2:11),]$Club
+
+data_club <- data[data$Club %in% top_ten_clubs,]
+ggplot(data_club, aes(x=reorder(data_club$Club, Wage_trans, median), y=Wage_trans)) + 
+  geom_boxplot() +
+  coord_flip() +
+  labs(x = "Top 10 Clubs", y = "Wage") 
+```
+  
+* The median wages of players from the top 10 clubs are quite different. The boxes have been sorted depending on the median value of the wage. FC Barcelona has the highest median wage, on the contrary, Borussia Dortmund has the smallest median wage.  
+* The box for Real Madrid is the longest one and the box for Borussia Dortmund is the shortest one, which means that the wage difference at Real Madrid is larger than that at Borussia Dortmund.  
+* Among all players from the top 10 clubs, the player with the highest wage is from FC Barcelona.  
+* In some clubs, like FC Barcelona, Chelsea, Liverpool and Arsenal, one player has a much larger wage than all the other players from the same club.  
+* For most clubs, the distribution of players' wage is positive skewed, especially Atlético Madrid.    
+
+## How do market values of players compare across top clubs? 
+```{r 4}
+ggplot(data_club, aes(reorder(data_club$Club, Value_trans, median), Value_trans)) + 
+  geom_boxplot() +
+  coord_flip() +
+  labs(x = "Top 10 Clubs", y = "Value")
+```
+  
+* The players from Real Madrid has the largest median market value, followed by FC Barcelona.  
+* Most the clubs have a few players with much higher market value than other players from the same club.  
+* For some clubs, like Real Madrid, Manchester City and Arsenal, the distribution of players' market value are positive skewed.  
+* The box for Real Madrid is the longest one and the box for Borussia Dortmund is the shortest one, which means that the difference of market value of Real Madrid is larger than that of Borussia Dortmund.  
+
+##  How are Overall and Potential scores related? 
+
+```{r 5}
+ggplot(data, aes(x=Overall, y=Potential)) + 
+  geom_point(alpha=0.2) +
+  geom_smooth(method=lm) 
+```
+  
+* According to the scatter plot, for all players, the potential score is no lower than the overall score.
+The player with high potential score has a high overall score.  
+* For players with the same overall score, their potential score could be quite different.  
+
+## Do player values differ by players’ age? And do wages differ by players’ age?
+
+```{r 61}
+p1 <- ggplot(data_club, aes(x = Age, y = Wage_trans, group = Age)) + 
+  geom_boxplot() + 
+  coord_flip() + 
+  labs(y = "Wage") 
+p2 <- ggplot(data_club, aes(x = Age, y = Value_trans, group = Age)) + 
+  geom_boxplot() + 
+  coord_flip() + 
+  labs(y = "Value") 
+
+grid.arrange(p1, p2, nrow = 1)
+```
+  
+* Both the distributions of Wage and Value differ by age.  
+* Players with ages from 26-31 tend to have higher wages then players from other ages.  
+* Players' median Value shows a great drop after 31.  
+
+## Does a player's value depend on his position?  
+
+```{r 71}
+data_pos <- na.omit(data, cols = c("Position","Value"))
+ggplot(data_pos, aes(reorder(data_pos$Position, Value_trans, median), Value_trans)) + 
+  geom_boxplot() + 
+  coord_flip() + 
+  labs(x = "Position", y = "Value") 
+```
+  
+* The boxplot is sorted by the median value of the players from that position. RF has the highest median value and GK has the lowest median value.
+* The distribution of player's values are positive skewed.  
+
+### Lots of outliers could be observed from the previous boxplot. (defined as outside of fixed factor of the IQR), and the distribution is heavy-tailed. Under this condition, transformations could be applied. One commonly used transformation is the log transformation.  
+
+```{r 72}
+ggplot(data_pos, aes(reorder(data_pos$Position,(Value_trans), median), log(Value_trans + 1))) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(x = "Position", y = "log_Value") 
+```
+  
+* After applying log transformation, redraw the boxplot. There are fewer outliers. In the meantime, the distribution of the data is clearer to observe.
+  
+
+
+## Who's the best player per position?  
+```{r 8}
+best_players <- data %>% 
+  group_by(Position) %>% 
+  filter(Overall == max(Overall))
+best_players[, c("Name","Position")]
+```
+
+## Do left footed players have advantages over right footed players?
+```{r 9,fig.height = 15, fig.width = 12}
+
+col <- c('Crossing','Finishing', 'HeadingAccuracy', 'ShortPassing', 'Volleys', 'Dribbling',
+         'Curve', 'FKAccuracy', 'LongPassing', 'BallControl', 'Acceleration',
+         'SprintSpeed', 'Agility', 'Reactions', 'Balance', 'ShotPower',
+         'Jumping', 'Stamina', 'Strength', 'LongShots', 'Aggression',
+         'Interceptions', 'Positioning', 'Vision', 'Penalties', 'Composure',
+         'Marking', 'StandingTackle', 'SlidingTackle')
+data <- na.omit(data, cols =col)
+meltdata <- melt(data, id.vars = c('Preferred.Foot'), measure.vars = col)
+
+ggplot(meltdata, aes(variable, value, fill=Preferred.Foot)) + 
+  geom_boxplot() + 
+  coord_flip() +
+  theme(text = element_text(size=20))
+```
+  
+* Left footed players have an advantage over right footed players in most of the abilities.  
+* In the meantime, for most variables, the deviations of values of the left footed players are smaller than those of the right footed players.

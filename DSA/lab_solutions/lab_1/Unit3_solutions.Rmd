@@ -1,0 +1,150 @@
+---
+title: "simple_linear_regression"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+Throughout this whole exercise, we drop the players whose heights or weights are nan. Draw a scatter plot of the players’ heights and weights with x-axis being heights (in inches) and y-axis being weights (in lbs). What is the correlation between these two variables? Fit a simple linear regression model using the standardized heights and standardized weights (weights as dependent variable). Verify that the slope of the fitted line is equal to the correlation we just calculated.
+
+```{r}
+players <- read.csv("../data/fifa.csv", stringsAsFactors = FALSE)
+players$X <- NULL
+head(players[c('Name', 'Height', 'Weight')], n = 3)
+```
+
+Remove players with NaN heights or weights and convert heights to numeric in inches and weights to numeric in lbs.
+```{r}
+players <- players[which(players$Height != "" & players$Weight != "" ),]
+
+players$height_inch <- sapply(
+  players$Height,
+  function(x) as.numeric(strsplit(x, "'")[[1]][1]) * 12 + as.numeric(strsplit(x, "'")[[1]][2])
+)
+
+players$weight_lbs <- sapply(
+  players$Weight,
+  function(x) as.numeric(strsplit(x, "lbs")[[1]][1])
+)
+
+head(players[c('Name', 'height_inch', 'weight_lbs')], n = 3)
+```
+
+Scatter plot of weight vs height
+```{r}
+library(ggplot2)
+
+g <- ggplot(players, aes(x = height_inch, y = weight_lbs)) +
+  geom_point(alpha = 0.2)
+g
+```
+
+Correlation coefficient.
+```{r}
+corr_coef <- cor(players$height_inch, players$weight_lbs)
+corr_coef
+```
+
+Fit a simple linear regression model to standardized data.
+```{r}
+fit_standardized <- lm(scale(weight_lbs) ~ scale(height_inch), data = players)
+abs(fit_standardized$coefficients[["scale(height_inch)"]] - corr_coef)
+```
+
+## Question 2
+Fit a simple linear regression to players’ heights and weights in their original scales (no standardization) with weight as dependent variable. What is the R2 score? What is the correlation between the true weights and the predicted weights using the fitted linear regression model and how is it related to the R2 score?
+
+Fit a linear regression model and calculate R2 score
+```{r}
+fit_original <- lm(weight_lbs ~ height_inch, data = players)
+r_squared <- summary(fit_original)$r.squared
+r_squared
+```
+
+Relationship between R2 and the correlation coefficient of actual and fitted values
+```{r}
+fitted_value <- predict(fit_original, newdata = players)
+abs(cor(players$weight_lbs, fitted_value)^2 - r_squared)
+```
+
+## Question 3
+Assuming iid Gaussian noise, give the 95 percent confidence interval for the slope of the linear regression line in question 2.
+
+```{r}
+model_coef <- summary(fit_original)$coefficients
+model_coef[2,1] + c(-1, 1) * model_coef[2, 2] * qt(0.975, df = fit_original$df)
+```
+
+
+## Question 4
+On top of the scatter plot drawn in question 1/, plot the fitted linear regression line from question 2/, and plot the 95 percent confidence intervals for the linear regression line and the 95 percent prediction intervals.
+
+```{r}
+x_vals <- seq(min(players$height_inch), max(players$height_inch),  by=0.1)
+new_data <- data.frame(height_inch=x_vals)
+p1 <- predict(fit_original, new_data, interval = 'confidence')
+p2 <- predict(fit_original, new_data, interval = 'prediction')
+confidence_df <- data.frame(height_inch = x_vals, weight_lbs = p1[, 1], y_max = p1[, 3], y_min = p1[, 2])
+prediction_df <- data.frame(height_inch = x_vals, weight_lbs = p2[, 1], y_max = p2[, 3], y_min = p2[, 2])
+
+g <- ggplot(players, aes(x = height_inch, y = weight_lbs)) +
+  geom_point(alpha = 0.2) +
+  geom_line(data = confidence_df, aes(x = height_inch, y = weight_lbs)) +
+  geom_ribbon(data = confidence_df, aes(ymin = y_min, ymax = y_max), fill = 'red', alpha = 0.5) +
+  geom_ribbon(data = prediction_df, aes(ymin = y_min, ymax = y_max), fill = "grey", alpha = 0.5)
+g
+```
+
+
+## Question 5
+For this question, let’s filter the data by Value >=$50K and Overall >= 60. Draw the scatter plot of Value and Overall with Value on the y-axis. Fit a simple linear regression model on Value vs Overall (Value as dependent variable) and draw the residual plot. How do you think the simple linear model performs here?What is the R2score? Now, take the log of the variable ‘Value’ and fit a simple linear regression using ‘log_Value’ and Overall. Draw the residual plot and calculate the R2 score.
+
+Convert unit of value to million and filter the data 
+```{r}
+library(stringr)
+
+convert_to_m <- function(string){
+  unit <- str_sub(string, -1, -1)
+  if (unit == '0') {
+    return(0)
+  } else if (unit == 'M') {
+    return(as.numeric(gsub("[^0-9\\.\\-]", "", string)))
+  } else {
+    return(as.numeric(gsub("[^0-9\\.\\-]", "", string)) / 1000)
+  }
+}
+
+players$value_m <- sapply(players$Value, convert_to_m)
+players <- players[which(players$value_m >= 0.05 & players$Overall >= 60),]
+
+g <- ggplot(players, aes(x = Overall, y = value_m)) +
+  geom_point(alpha = 0.2) + labs(y = "Value") 
+g
+```
+
+Fit a simple linear regression. Plot residual vs fitted value. And compute R2 score.
+```{r}
+fit_lm <- lm(value_m ~ Overall, data = players)
+g <- ggplot(data = data.frame(fitted = predict(fit_lm), residual = resid(fit_lm)), aes(x=fitted, y=residual)) +
+  geom_point(alpha = 0.2) +
+  geom_hline(yintercept = 0)
+g
+r_squared <- summary(fit_lm)$r.squared
+r_squared
+```
+
+Take log of value, refit a simple linear regression model, plot the residual and compute R2.
+```{r}
+players$log_value_m <- log(players$value_m)
+fit_lm_log <- lm(log_value_m ~ Overall, data = players)
+g_log <- ggplot(data = data.frame(fitted = predict(fit_lm_log), residual = resid(fit_lm_log)), aes(x=fitted, y=residual)) +
+  geom_point(alpha = 0.2) +
+  geom_hline(yintercept = 0)
+g_log
+r_squared_log <- summary(fit_lm_log)$r.squared
+r_squared_log
+```
