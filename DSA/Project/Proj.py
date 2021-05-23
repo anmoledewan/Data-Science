@@ -26,7 +26,7 @@ import pyodbc
 
 #########################
 #                       #
-#  constant variables   #
+#  Pathfinder variables #
 #                       #
 #########################
 
@@ -57,19 +57,31 @@ trace3 = go.Pie(labels=labels,
                values=value_list,
                )
 data2 = [trace3]
-layout = go.Layout(title='Pathfinder Status')
-pie_fig = go.Figure(data=data2, layout=go.Layout(title='Pathfinder Overall Jobs status'))
+layout2 = deepcopy(GRAPH_LAYOUT)
+layout2['title'] = 'Pathfinder Overall Jobs Status for Russell 3K'
+pie_fig = go.Figure(data=data2, layout=layout2)
+
+dropdownval2=pfdata['KeyProcessStream'].astype(str).unique()
+
+pfdata['KeyProcessStream']=pfdata['KeyProcessStream'].astype(str)
+
+#######################################################################################
 
 
-df=pd.read_excel (r'\\II02FIL001.mhf.mhc\FT\2. Operations\MDCA - Hierarchy Management\Russell 3000\Stats\Master File.xlsx')
+df=pd.read_excel (r'\\II02FIL001.mhf.mhc\FT\2. Operations\MDCA - Hierarchy Management\Russell 3000\Stats\Master File - Presentation.xlsx')
+
+labels4 = ['Add-New','Manual Review','Add-Exist']
+value_list4=[df['Add New Count'].sum(),df['Manual Review Count'].sum(),df['Add Exist Count'].sum()]
+trace4 = go.Pie(labels=labels4,
+               values=value_list4, hole=.3
+               )
+data4 = [trace4]
+layout4 = deepcopy(GRAPH_LAYOUT)
+layout4['title'] = 'Company Linking Tag via KENSHO'
+pie_fig2 = go.Figure(data=data4, layout=layout4)
 
 
-df=df.tail(20)
 
-df1=df.iloc[:5, :5 ]
-
-trace1 = go.Bar(x=df['Name'], y=df['count current year'], name='Current Year')
-trace2 = go.Bar(x=df['Name'], y=df['count previous year'], name='Previous Year')
 
 #trace = go.Pie(labels=labels,
 #               values=value_list,
@@ -83,8 +95,8 @@ trace2 = go.Bar(x=df['Name'], y=df['count previous year'], name='Previous Year')
 #    Utils functions    #
 #                       #
 #########################
-
-
+dropdownval1=df['Model run Date'].astype(str).unique()
+df['Model run Date']=df['Model run Date'].astype(str)
 
 def load_encoded_image(filename):
     """Load and encode the input image"""
@@ -123,7 +135,7 @@ encoded_image = load_encoded_image(image_filename)
 app = dash.Dash()
 
 # You can load an external css file in the following way
-app.css.append_css({"external_url": "https://altd-dev.s3.amazonaws.com/dash/style.css"})
+#app.css.append_css({"external_url": "https://altd-dev.s3.amazonaws.com/dash/style.css"})
 # You can also provide local css files in the assets folder.
 # In this case, the css files I put in the remote s3 storage and here in the assets folder are the same.
 # You may use the external css in s3 as a baseline and override certain settings with local css files.
@@ -171,11 +183,44 @@ app.layout = html.Div(
                                     selected_style=TAB_SELECTED_STYLE,
                                     children=[
                                         html.Div(
-                                            [
-                                                
+                                            [                                                
                                                 # Create the graph and table visualizations based on the selection
+                                                html.H6('Total Filers Processed as part of automation:      ' + str(df.shape[0])),
+                                                html.H6('Total Subsidiaries Extracted automatically:        ' + str(df['count previous year'].sum()+df['count current year'].sum())),
+                                                html.Div(
+                                                            
+                            
+                                                            dcc.Graph(
+                                                
+                                                                id='pie-graph4',
+                                                                figure=pie_fig2
+                                                                ),
+
+                                                        ),
+                                                html.Hr(),
                                                 html.Div(
                                                     [
+                                                        
+                                                        #html.H6('Average Subsidiaries per Filer: ' + str((df['count previous year'].sum()+df['count current year'].sum())/df.shape[0])),
+                                                        
+                                                        html.Div(
+                                                            [
+                                                                # Dropdown for selecting the descriptive values
+                                                                html.P(
+                                                                    'Select Model Run Date',
+                                                                    className='sp_subheader'
+                                                                    ),
+                                                                dcc.Dropdown(
+                                                                    id='descriptive-dropdown',
+                                                                    options=format_options(dropdownval1),
+                                                                    # set all possible options
+                                                                    value=dropdownval1[0],  # set default option
+                                                                    className='sp_dropdown'
+                                                                    )
+                                                                ],
+                                                            className='two columns' # indicate the location
+                                                            ),
+                                                       # html.br(),
                                                         # Note that the graph and table are created by the callback functions
                                                         html.Div(
                                                             # the 'id' for the component is important
@@ -183,57 +228,27 @@ app.layout = html.Div(
                                                             # generating this component as output in
                                                             # the following functions.
                                                             # this has to be identical.
-                                                            
-                                                            dcc.Graph(
-                                                                className='six.columns',
-                                                                id='descriptive-graph1',
-                                                                figure={
-                                                                    'data': [trace1,trace2],
-                                                                    'layout':
-                                                                        go.Layout(title='Subsidiaries extracted per filer', barmode='stack')
-                                                                        }),
+                                                            id='descriptive-graph1',
+                                                            className='four columns',
 
                                                         ),
                                                         html.Div(
-                                                            className='one.columns',
-                                                            
-                                                           # children=[
-                                                           #     html.H4(children='Segments size'),
-                                                           #     dcc.Graph(
-                                                           #         figure=pie_fig
-                                                           #         )
-                                                           #     ]
+                                                            [
+                                                            html.Img(
+                                                                src='data:image/png;base64,{}'.format(encoded_image),
+                                                                style={'visibility': 'hidden'}
+                                                                ), 
+                                                            ],
+                                                            className='one column',
+                                                          
                                                         ),
-                                                         html.Div(
+                                                          html.Div(
+                                                              id='descriptive-table1',
+                                                              className='four columns',
                                                             
-                                                            html.Div(
-                                                                className='six.columns',
-                                                                children=[
-                                                            dash_table.DataTable(
-                                                                
-                                                                data=df1.to_dict('records'),
-                                                                columns=[{'id': c, 'name': c} for c in df1.columns],
-
-                                                                style_header={'backgroundColor': 'rgb(30, 30, 30)',
-                                                                              'font_size': '22px'},
-                                                                style_cell={
-                                                                    'backgroundColor': 'rgb(50, 50, 50)',
-                                                                    'font_size': '22px',
-                                                                    'color': 'white'
-                                                                    },
-                                                                )]
-                                                           # children=[
-                                                           #     html.H4(children='Segments size'),
-                                                           #     dcc.Graph(
-                                                           #         figure=pie_fig
-                                                           #         )
-                                                           #     ]
-                                                        
-                                                                
-                                                        ),
-                                                            ),
+                                                           ),
                                                     ],
-                                                    className='twelve.columns',
+                                                    className='twelve columns',
                                                     style={'margin-top': 40},
                                                 ),
                                             ]
@@ -254,14 +269,10 @@ app.layout = html.Div(
                                                     [
                                                         # Note that the graph and table are created by the callback functions
                                                         html.Div(
-                                                            # the 'id' for the component is important
-                                                            # when using this component as input or
-                                                            # generating this component as output in
-                                                            # the following functions.
-                                                            # this has to be identical.
+                                                            
                                                             
                                                             dcc.Graph(
-                                                                className='seven.columns',
+                                                                className='seven columns',
                                                                 id='pie-graph1',
                                                                 figure=pie_fig
                                                                 ),
@@ -272,30 +283,33 @@ app.layout = html.Div(
                                                            
                                                             ),
                                                         html.Div(
-                                                            
-                                                             dash_table.DataTable(
-                                                                
-                                                                data=df_cl_label.to_dict('records'),
-                                                                columns=[{'id': c, 'name': c} for c in df_cl_label.columns],
-
-                                                                style_header={'backgroundColor': 'rgb(30, 30, 30)',
-                                                                              'font_size': '22px'},
-                                                                style_cell={
-                                                                    'backgroundColor': 'rgb(50, 50, 50)',
-                                                                    'font_size': '22px',
-                                                                    'color': 'white'
-                                                                    },
-                                                                ),
-                                                             className='three.columns',
-                                                          
-                                                         
-                                                        ),
-                                                         html.Div(
-                                                            
-                                                           
+                                                            [
+                                                                # Dropdown for selecting the descriptive values
+                                                                html.P(
+                                                                    'Select KPS for Job Status',
+                                                                    className='sp_subheader'
+                                                                    ),
+                                                                dcc.Dropdown(
+                                                                    id='descriptive-dropdown2',
+                                                                    options=format_options(dropdownval2),
+                                                                    # set all possible options
+                                                                    value=dropdownval2[0],  # set default option
+                                                                    className='sp_dropdown'
+                                                                    )
+                                                                ],
+                                                            className='two columns' # indicate the location
                                                             ),
+                                                       # html.br(),
+                                                        # Note that the graph and table are created by the callback functions
+                                                        html.Div(
+                                                           
+                                                            id='pie-graph2',
+                                                            className='four columns',
+
+                                                        ),
+                                                       
                                                     ],
-                                                    className='ten.columns',
+                                                    className='ten columns',
                                                     style={'margin-top': 40},
                                                 ),
                                             ]
@@ -345,6 +359,57 @@ app.layout = html.Div(
     ]
 )
 
+@app.callback(Output(component_id='descriptive-graph1', component_property='children'),
+              Input(component_id='descriptive-dropdown', component_property='value'),
+              )
+def create_descriptive_graph1(selection):
+        df2 = df[df['Model run Date']==selection]
+        trace1 = go.Bar(x=df2['Name'], y=df2['count current year'], name='Current Year')
+        trace2 = go.Bar(x=df2['Name'], y=df2['count previous year'], name='Previous Year')
+        layout = deepcopy(GRAPH_LAYOUT)
+        layout['title'] = 'Filers Extracted on ' + selection
+        layout['barmode']='stack'
+        return dcc.Graph(
+            figure={
+            'data': [trace1,trace2],
+             'layout':layout
+               })
+    
+@app.callback(Output(component_id='descriptive-table1', component_property='children'),
+              Input(component_id='descriptive-dropdown', component_property='value'),
+              )
+def create_descriptive_table1(selection):
+        df2 = df[df['Model run Date']==selection]
+        df2=df2.iloc[:,[0,3]]
+        
+        return dash_table.DataTable(
+            data=df2.to_dict('records'),
+            columns=[{'id': c, 'name': c} for c in df2.columns],
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'font_size': '16px'},
+            style_cell={'backgroundColor': 'rgb(50, 50, 50)',
+                        'font_size': '14px',
+                        'color': 'white'
+                        },
+            )
+@app.callback(Output(component_id='pie-graph2', component_property='children'),
+              Input(component_id='descriptive-dropdown2', component_property='value'),
+              )
+def create_descriptive_graph2(selection2):
+        df2 = pfdata[pfdata['KeyProcessStream']==selection2]
+        df_cl_label = df2['Job Status'].value_counts().to_frame().sort_index()
+        labels = np.sort(df2['Job Status'].unique())
+        df_cl_label = df2['Job Status'].value_counts().to_frame().sort_index()
+        value_list = df_cl_label['Job Status'].tolist()
+        trace3 = go.Pie(labels=labels,
+               values=value_list,
+               )
+        data2 = [trace3]
+        layout2 = deepcopy(GRAPH_LAYOUT)
+        layout2['title'] = 'Pathfinder Status for KPS:' + selection2
+        pie_fig = go.Figure(data=data2, layout=layout2)
+        return dcc.Graph(
+            figure=pie_fig
+            )
 
 
 # if run this code on jupyter notebook, please change 'debug=False'.
