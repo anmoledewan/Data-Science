@@ -229,19 +229,19 @@ app.layout = html.Div(
                                                             # the following functions.
                                                             # this has to be identical.
                                                             id='descriptive-graph1',
-                                                            className='four columns',
+                                                            className='six columns',
 
                                                         ),
-                                                        html.Div(
-                                                            [
-                                                            html.Img(
-                                                                src='data:image/png;base64,{}'.format(encoded_image),
-                                                                style={'visibility': 'hidden'}
-                                                                ), 
-                                                            ],
-                                                            className='one column',
+                                                        # html.Div(
+                                                        #     [
+                                                        #     html.Img(
+                                                        #         src='data:image/png;base64,{}'.format(encoded_image),
+                                                        #         style={'visibility': 'hidden'}
+                                                        #         ), 
+                                                        #     ],
+                                                        #     className='one column',
                                                           
-                                                        ),
+                                                        # ),
                                                           html.Div(
                                                               id='descriptive-table1',
                                                               className='four columns',
@@ -380,7 +380,7 @@ def create_descriptive_graph1(selection):
               )
 def create_descriptive_table1(selection):
         df2 = df[df['Model run Date']==selection]
-        df2=df2.iloc[:,[0,3]]
+        df2=df2.iloc[:,[0,3,5,7]]
         
         return dash_table.DataTable(
             data=df2.to_dict('records'),
