@@ -46,6 +46,7 @@ and i.UpdOperation < 2
 order by i.KeyProcessStream"""
 
 pfdata=pd.read_sql(pfQuery, conn)
+pfdata.to_excel(r"C:\Users\anmole_dewan\OneDrive - S&P Global\Documents\GitHub\Data-Science\DSA\Project\pfoutput.xlsx", engine='xlsxwriter')
 df_cl_label = pfdata['Job Status'].value_counts().to_frame().sort_index()
 
 
@@ -415,3 +416,10 @@ def create_descriptive_graph2(selection2):
 # if run this code on jupyter notebook, please change 'debug=False'.
 if __name__ == '__main__':
     app.run_server(debug=False,port=8090)
+
+
+
+
+
+
+
