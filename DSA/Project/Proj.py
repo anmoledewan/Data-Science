@@ -5,6 +5,18 @@ Created on Thu May 13 01:13:01 2021
 @author: Anmole_Dewan
 """
 
+# !pip install pandas
+# !pip install statsmodels
+# !pip install numpy
+# !pip install seaborn
+# !pip install scipy
+# !pip install matplotlib
+# !pip install dash
+
+# !pip install copy
+
+
+
 
 import base64
 from copy import deepcopy
@@ -22,7 +34,7 @@ from dash.dependencies import Input, Output
 # import the different styles from styles.py
 from styles import GRAPH_LAYOUT, TABLE_STYLE, TAB_NORMAL_STYLE, TAB_SELECTED_STYLE
 
-import pyodbc
+#import pyodbc
 
 #########################
 #                       #
@@ -30,23 +42,26 @@ import pyodbc
 #                       #
 #########################
 
-conn = pyodbc.connect('Driver={SQL Server};''Server=chodb05;''Database=Pathfinder;''Trusted_Connection=yes;')
+#conn = pyodbc.connect('Driver={SQL Server};''Server=chodb05;''Database=Pathfinder;''Trusted_Connection=yes;')
+#
+#pfQuery="""select distinct i.ProcessInstanceAppianID as 'PathFinder JOB ID', f.ProcessFieldValue as 'Filer Name', g.ProcessFieldValue as 'Filer CIQID',j.ProcessFieldValue as 'File Saved',i.KeyProcessStream,
+#case when i.ProcessInstanceCompleted is NULL then 'Job Pending' 
+#when i.ProcessInstanceCompleted is NOT NULL then 'Job Completed'
+#else 'NULL' end as 'Job Status',h.ProcessFieldValue as 'Structure Type'
+#from PathFinder..ProcessInstance i
+#left join PathFinder..ProcessDataValue f on i.KeyProcessInstance = f.KeyProcessInstance and f.FieldIdentifier = 'FilerName'
+#left join PathFinder..ProcessDataValue g on i.KeyProcessInstance = g.KeyProcessInstance and g.FieldIdentifier = 'FilerID'
+#left join PathFinder..ProcessDataValue j on i.KeyProcessInstance = j.KeyProcessInstance and j.FieldIdentifier = 'FileSaved'
+#left join PathFinder..ProcessDataValue h on i.KeyProcessInstance = h.KeyProcessInstance and h.FieldIdentifier = 'StructureType'
+#where i.KeyProcessStream in ( 51029,51032,51024)
+#and i.UpdOperation < 2
+#order by i.KeyProcessStream"""
+#
+#pfdata=pd.read_sql(pfQuery, conn)
+#pfdata.to_excel(r"C:\Users\anmole_dewan\OneDrive - S&P Global\Documents\GitHub\Data-Science\DSA\Project\pfoutput.xlsx", engine='xlsxwriter')
 
-pfQuery="""select distinct i.ProcessInstanceAppianID as 'PathFinder JOB ID', f.ProcessFieldValue as 'Filer Name', g.ProcessFieldValue as 'Filer CIQID',j.ProcessFieldValue as 'File Saved',i.KeyProcessStream,
-case when i.ProcessInstanceCompleted is NULL then 'Job Pending' 
-when i.ProcessInstanceCompleted is NOT NULL then 'Job Completed'
-else 'NULL' end as 'Job Status',h.ProcessFieldValue as 'Structure Type'
-from PathFinder..ProcessInstance i
-left join PathFinder..ProcessDataValue f on i.KeyProcessInstance = f.KeyProcessInstance and f.FieldIdentifier = 'FilerName'
-left join PathFinder..ProcessDataValue g on i.KeyProcessInstance = g.KeyProcessInstance and g.FieldIdentifier = 'FilerID'
-left join PathFinder..ProcessDataValue j on i.KeyProcessInstance = j.KeyProcessInstance and j.FieldIdentifier = 'FileSaved'
-left join PathFinder..ProcessDataValue h on i.KeyProcessInstance = h.KeyProcessInstance and h.FieldIdentifier = 'StructureType'
-where i.KeyProcessStream in ( 51029,51032,51024)
-and i.UpdOperation < 2
-order by i.KeyProcessStream"""
 
-pfdata=pd.read_sql(pfQuery, conn)
-pfdata.to_excel(r"C:\Users\anmole_dewan\OneDrive - S&P Global\Documents\GitHub\Data-Science\DSA\Project\pfoutput.xlsx", engine='xlsxwriter')
+pfdata=pd.read_excel (r'pfoutput.xlsx')
 df_cl_label = pfdata['Job Status'].value_counts().to_frame().sort_index()
 
 
@@ -69,7 +84,8 @@ pfdata['KeyProcessStream']=pfdata['KeyProcessStream'].astype(str)
 #######################################################################################
 
 
-df=pd.read_excel (r'\\II02FIL001.mhf.mhc\FT\2. Operations\MDCA - Hierarchy Management\Russell 3000\Stats\Master File - Presentation.xlsx')
+#df=pd.read_excel (r'\\II02FIL001.mhf.mhc\FT\2. Operations\MDCA - Hierarchy Management\Russell 3000\Stats\Master File - Presentation.xlsx')
+df=pd.read_excel (r'Master File - Presentation.xlsx')
 
 labels4 = ['Add-New','Manual Review','Add-Exist']
 value_list4=[df['Add New Count'].sum(),df['Manual Review Count'].sum(),df['Add Exist Count'].sum()]
@@ -84,13 +100,6 @@ pie_fig2 = go.Figure(data=data4, layout=layout4)
 
 
 
-#trace = go.Pie(labels=labels,
-#               values=value_list,
-#               marker=dict(
- #                  colors=['rgb(42,60,142)', 'rgb(199,119,68)', 'rgb(91,138,104)', 'rgb(67,125,178)', 'rgb(225,184,10)',
- #                          'rgb(165,12,12)'])
-  #             )
-#data=[trace]
 #########################
 #                       #
 #    Utils functions    #
@@ -190,13 +199,14 @@ app.layout = html.Div(
                                                 html.H6('Total Subsidiaries Extracted automatically:        ' + str(df['count previous year'].sum()+df['count current year'].sum())),
                                                 html.Div(
                                                             
-                            
+                                                    [
                                                             dcc.Graph(
                                                 
                                                                 id='pie-graph4',
                                                                 figure=pie_fig2
                                                                 ),
-
+                                                            ],
+                                                            className='five columns'
                                                         ),
                                                 html.Hr(),
                                                 html.Div(
@@ -230,7 +240,7 @@ app.layout = html.Div(
                                                             # the following functions.
                                                             # this has to be identical.
                                                             id='descriptive-graph1',
-                                                            className='six columns',
+                                                            className='five columns',
 
                                                         ),
                                                         # html.Div(
@@ -381,7 +391,7 @@ def create_descriptive_graph1(selection):
               )
 def create_descriptive_table1(selection):
         df2 = df[df['Model run Date']==selection]
-        df2=df2.iloc[:,[0,3,5,7]]
+        df2=df2.iloc[:,[0,7]]
         
         return dash_table.DataTable(
             data=df2.to_dict('records'),
@@ -415,7 +425,7 @@ def create_descriptive_graph2(selection2):
 
 # if run this code on jupyter notebook, please change 'debug=False'.
 if __name__ == '__main__':
-    app.run_server(debug=False,port=8090)
+    app.run_server(debug=True,port='8090')
 
 
 
