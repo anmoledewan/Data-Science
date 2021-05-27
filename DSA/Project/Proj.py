@@ -70,7 +70,7 @@ df_cl_label = pfdata['Job Status'].value_counts().to_frame().sort_index()
 value_list = df_cl_label['Job Status'].tolist()
 
 trace3 = go.Pie(labels=labels,
-               values=value_list,
+               values=value_list,hole=.3
                )
 data2 = [trace3]
 layout2 = deepcopy(GRAPH_LAYOUT)
@@ -82,7 +82,11 @@ dropdownval2=pfdata['KeyProcessStream'].astype(str).unique()
 pfdata['KeyProcessStream']=pfdata['KeyProcessStream'].astype(str)
 
 #######################################################################################
-
+#########################
+#                       #
+#  Master Stats variables #
+#                       #
+#########################
 
 #df=pd.read_excel (r'\\II02FIL001.mhf.mhc\FT\2. Operations\MDCA - Hierarchy Management\Russell 3000\Stats\Master File - Presentation.xlsx')
 df=pd.read_excel (r'Master File - Presentation.xlsx')
@@ -94,10 +98,57 @@ trace4 = go.Pie(labels=labels4,
                )
 data4 = [trace4]
 layout4 = deepcopy(GRAPH_LAYOUT)
-layout4['title'] = 'Company Linking Tag via KENSHO'
+layout4['title'] = 'Company Linking Distribution'
 pie_fig2 = go.Figure(data=data4, layout=layout4)
 
 
+
+
+trace6 = go.Bar(x=np.sort(df['Industry Level 1'].unique()), y=df['Industry Level 1'].value_counts().sort_index(), name='Industry')
+
+layout6 = deepcopy(GRAPH_LAYOUT)
+layout6['title'] = 'Filers distributed by Industry Level 1'
+#layout['barmode']='stack'
+        
+
+
+
+dfg=pd.DataFrame({'Industry': np.sort(df['Industry Level 1'].unique()), 'No of Filers': df['Industry Level 1'].value_counts().sort_index()})
+
+
+#########################
+#                       #
+#  Doc vs DB  variables #
+#                       #
+#########################
+
+docvsdb=pd.read_excel (r'Doc vs DB combined.xlsx')
+
+labels5 = ['Automated','Manual Review','No Action Performed']
+value_list5=[docvsdb['Action'][docvsdb['Action']=='Automated'].count(),
+             docvsdb['Action'][docvsdb['Action']=='Manual Review'].count(),
+             docvsdb['Action'][docvsdb['Action']=='No Action'].count()]
+trace5 = go.Pie(labels=labels5,
+               values=value_list5, hole=.3)
+data5 = [trace5]
+layout5 = deepcopy(GRAPH_LAYOUT)
+layout5['title'] = 'Relationship Ingestion Distribution'
+pie_fig5 = go.Figure(data=data5, layout=layout5)
+
+
+#########################
+#                       #
+#  Symbol variables     #
+#                       #
+#########################
+symboldf=pd.read_excel (r'Consolidated Symbol file.xlsx')
+
+##########################
+#                        #
+#  Extraction variables  #
+#                        #
+##########################
+extractiondf=pd.read_excel (r'Extraction.xlsx')
 
 
 #########################
@@ -195,8 +246,11 @@ app.layout = html.Div(
                                         html.Div(
                                             [                                                
                                                 # Create the graph and table visualizations based on the selection
-                                                html.H6('Total Filers Processed as part of automation:      ' + str(df.shape[0])),
-                                                html.H6('Total Subsidiaries Extracted automatically:        ' + str(df['count previous year'].sum()+df['count current year'].sum())),
+                                                html.H5('Total Filers Processed as part of automation:      ' + str(df.shape[0])),
+                                                html.H5('Total Subsidiaries Extracted automatically:        ' + str(df['count previous year'].sum()+df['count current year'].sum())),
+                                                html.Br(),
+                                                html.Hr(),
+                                                html.H5('Automation vs Manual Quantum Distribution'),
                                                 html.Div(
                                                             
                                                     [
@@ -208,9 +262,66 @@ app.layout = html.Div(
                                                             ],
                                                             className='five columns'
                                                         ),
-                                                html.Hr(),
+                                               
+                                                html.Div(
+                                                    className='one columns'
+                                                    ),
+                                                
                                                 html.Div(
                                                     [
+                                                            dcc.Graph(
+                                                
+                                                                id='pie-graph5',
+                                                                figure=pie_fig5
+                                                                ),
+                                                        ],
+                                                    className='five columns'
+                                                        ),   
+                                                html.Br(),
+                                                
+                                                html.Div(
+                                                    [
+                                                        html.H5('Overall Extraction Statistics'),
+                                                        html.Div( 
+                                                        
+                                                            [
+                                                            #######Table here
+                                                            dash_table.DataTable(
+                                                                
+                                                                data=dfg.to_dict('records'),
+                                                                columns=[{'id': c, 'name': c} for c in dfg.columns],
+                                                                style_header={'backgroundColor': 'rgb(30, 30, 30)', 'font_size': '16px'},
+                                                                style_cell={'backgroundColor': 'rgb(50, 50, 50)',
+                                                                            'font_size': '14px',
+                                                                            'color': 'white'
+                                                                            },
+                                                                )
+                                                                    
+                                                            #################
+                                                            ],
+                                                             className='three columns',
+                                                             style={'margin-top': 100},
+                                                        ),
+                                                        html.Div( 
+                                                            [
+                                                            dcc.Graph(
+                                                             figure={
+                                                                 'data': [trace6],
+                                                                 'layout':layout6
+                                                                 }),
+                                                            
+                                                            ],
+                                                             className='eight columns',
+                                                        ),
+                                                        
+                                                        ],
+                                                    className='twelve columns',
+                                                    
+                                                    ),
+                                                
+                                                html.Div(
+                                                    [
+                                                        html.H5('Daily Extraction Statistics'),
                                                         
                                                         #html.H6('Average Subsidiaries per Filer: ' + str((df['count previous year'].sum()+df['count current year'].sum())/df.shape[0])),
                                                         
@@ -256,6 +367,7 @@ app.layout = html.Div(
                                                           html.Div(
                                                               id='descriptive-table1',
                                                               className='four columns',
+                                                              style={'margin-top': 100},
                                                             
                                                            ),
                                                     ],
@@ -320,7 +432,7 @@ app.layout = html.Div(
                                                         ),
                                                        
                                                     ],
-                                                    className='ten columns',
+                                                    className='twelve columns',
                                                     style={'margin-top': 40},
                                                 ),
                                             ]
@@ -340,6 +452,35 @@ app.layout = html.Div(
                     style=TAB_NORMAL_STYLE,
                     selected_style=TAB_SELECTED_STYLE,
                     children=[
+                        html.H5('Company Linking Data'),
+                        html.Div(
+                            [
+                                dash_table.DataTable(
+                                    id='datatable-interactivity',
+                                    columns=[
+                                        {'name': i, 'id': i, 'deletable': False} for i in symboldf.columns
+                                        # omit the id column
+                                        if i != 'id'
+                                        ],
+                                    data=symboldf.to_dict('records'),
+                                    editable=True,
+                                    filter_action="native",
+                                    sort_action="native",
+                                    sort_mode='multi',
+                                    row_selectable='multi',
+                                    row_deletable=False,
+                                    selected_rows=[],
+                                    page_action='native',
+                                    page_current= 0,
+                                    page_size= 20,
+                                    style_table=TABLE_STYLE['style_table'],
+                                    style_header=TABLE_STYLE['style_header'],
+                                    style_cell=TABLE_STYLE['style_cell']
+                                    ),
+                                ],style={'margin-top': 50},
+                            ),
+                        
+                        html.Div(id='datatable-interactivity-container')
                                     
 
                     ]
@@ -369,6 +510,50 @@ app.layout = html.Div(
         )
     ]
 )
+
+@app.callback(
+    Output('datatable-interactivity', 'style_data_conditional'),
+    Input('datatable-interactivity', 'selected_columns')
+)
+def update_styles(selected_columns):
+    return [{
+        'if': { 'column_id': i },
+        'background_color': '#D2F3FF'
+    } for i in selected_columns]
+
+@app.callback(
+    Output('datatable-interactivity-container', "children"),
+    Input('datatable-interactivity', "derived_virtual_data"))
+def update_graphs(rows):
+    # When the table is first rendered, `derived_virtual_data` and
+    # `derived_virtual_selected_rows` will be `None`. This is due to an
+    # idiosyncrasy in Dash (unsupplied properties are always None and Dash
+    # calls the dependent callbacks when the component is first rendered).
+    # So, if `rows` is `None`, then the component was just rendered
+    # and its value will be the same as the component's dataframe.
+    # Instead of setting `None` in here, you could also set
+    # `derived_virtual_data=df.to_rows('dict')` when you initialize
+    # the component.
+    
+
+    dff = symboldf if rows is None else pd.DataFrame(rows)
+
+    if rows is None:
+        return [
+            html.P("")
+        ]
+    else:
+        dff.to_excel(r'./Symbol-updated.xlsx', engine='xlsxwriter')
+        return [
+            html.P("Symbol Table Updated with new value")
+        ]
+        
+
+
+
+    
+
+
 
 @app.callback(Output(component_id='descriptive-graph1', component_property='children'),
               Input(component_id='descriptive-dropdown', component_property='value'),
@@ -413,9 +598,10 @@ def create_descriptive_graph2(selection2):
         value_list = df_cl_label['Job Status'].tolist()
         trace3 = go.Pie(labels=labels,
                values=value_list,
-               )
+                hole=.3
+            )
         data2 = [trace3]
-        layout2 = deepcopy(GRAPH_LAYOUT)
+        #layout2 = deepcopy(GRAPH_LAYOUT)
         layout2['title'] = 'Pathfinder Status for KPS:' + selection2
         pie_fig = go.Figure(data=data2, layout=layout2)
         return dcc.Graph(
@@ -425,7 +611,7 @@ def create_descriptive_graph2(selection2):
 
 # if run this code on jupyter notebook, please change 'debug=False'.
 if __name__ == '__main__':
-    app.run_server(debug=True,port='8090')
+    app.run_server(debug=False,port='8090')
 
 
 
