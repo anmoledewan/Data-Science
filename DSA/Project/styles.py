@@ -6,6 +6,22 @@ COLORS_SET = {
     'tab_bgcolor': '#808285',
 }
 
+#Button
+white_button_style = {'background-color': 'white',
+                      'color': 'black',
+ #                     'height': '50px',
+ #                     'width': '100px',
+                      'margin-top': '50px',
+                      'margin-left': '50px',
+                      "color:hover": "orange",
+                                 }
+
+red_button_style = {'background-color': 'red',
+                    'color': 'white',
+#                    'height': '50px',
+#                    'width': '100px',
+                    'margin-top': '50px',
+                    'margin-left': '50px'}
 
 # GRAPH
 GRAPH_LAYOUT = {
@@ -80,7 +96,7 @@ TABLE_STYLE['style_cell'] = {
     # 'maxWidth': '300px',
     # 'maxHeight': '30',
     # 'overflowY': 'scroll',
-    # 'borderColor': COLORS_SET['sp_grey'],
+     'borderColor': COLORS_SET['sp_grey'],
     # 'borderWidth': '0.5px',
 }
 

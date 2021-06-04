@@ -1,0 +1,15 @@
+Researcher wise dashboard
+
+Date range
+
+Average time to close the job
+
+
+Data points: Process wise, researcher wise view
+
+Kind of changes made in mnaual and automated processes
+
+
+QA of automated universe
+
+SLA perspective  -    

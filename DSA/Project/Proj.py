@@ -14,13 +14,13 @@ Created on Thu May 13 01:13:01 2021
 # !pip install dash
 
 # !pip install copy
-
+# !pip install sqldf
 
 
 
 import base64
 from copy import deepcopy
-
+import sqldf
 # import dash package, please make sure installing the same version in the requirements.txt
 import dash
 import dash_core_components as dcc
@@ -32,7 +32,7 @@ import plotly.graph_objs as go
 import statsmodels.formula.api as smf
 from dash.dependencies import Input, Output
 # import the different styles from styles.py
-from styles import GRAPH_LAYOUT, TABLE_STYLE, TAB_NORMAL_STYLE, TAB_SELECTED_STYLE
+from styles import GRAPH_LAYOUT, TABLE_STYLE, TAB_NORMAL_STYLE, TAB_SELECTED_STYLE, white_button_style, red_button_style
 
 #import pyodbc
 
@@ -81,6 +81,26 @@ dropdownval2=pfdata['KeyProcessStream'].astype(str).unique()
 
 pfdata['KeyProcessStream']=pfdata['KeyProcessStream'].astype(str)
 
+
+
+x=pfdata.groupby(['KeyProcessStream','Job Status'])
+
+sqldf.run('select CASE WHEN KeyProcessStream = 51024 THEN \'Manual Structure Extraction Jobs\' WHEN KeyProcessStream = 51029 THEN \'Manual Company Linking Jobs\' WHEN KeyProcessStream = 51032 THEN \'Manual Rel Tagging Jobs\' END AS KeyProcessStream , count(`Job Status`) as `Job Completed` from pfdata where `Job Status` = \'Job Completed\' group by KeyProcessStream order by KeyProcessStream')
+sqldf.run('select CASE WHEN KeyProcessStream = 51024 THEN \'Manual Structure Extraction Jobs\' WHEN KeyProcessStream = 51029 THEN \'Manual Company Linking Jobs\' WHEN KeyProcessStream = 51032 THEN \'Manual Rel Tagging Jobs\' END AS KeyProcessStream, count(`Job Status`) as `Job Pending` from pfdata where `Job Status` = \'Job Pending\' group by KeyProcessStream order by KeyProcessStream')
+
+KPSdf=sqldf.run('select CASE WHEN KeyProcessStream = 51024 THEN \'Manual Structure Extraction Jobs\' WHEN KeyProcessStream = 51029 THEN \'Manual Company Linking Jobs\' WHEN KeyProcessStream = 51032 THEN \'Manual Rel Tagging Jobs\' END AS KeyProcessStream, count(`Job Status`) as `Job_Completed` from pfdata where `Job Status` = \'Job Completed\' group by KeyProcessStream order by KeyProcessStream')
+KPSdf2=sqldf.run('select CASE WHEN KeyProcessStream = 51024 THEN \'Manual Structure Extraction Jobs\' WHEN KeyProcessStream = 51029 THEN \'Manual Company Linking Jobs\' WHEN KeyProcessStream = 51032 THEN \'Manual Rel Tagging Jobs\' END AS KeyProcessStream, count(`Job Status`) as `Job_Pending` from pfdata where `Job Status` = \'Job Pending\' group by KeyProcessStream order by KeyProcessStream')
+
+KPSdf['Job_Pending']=KPSdf2['Job_Pending']
+
+
+trace11 = go.Bar(x=KPSdf['KeyProcessStream'], y=KPSdf['Job_Completed'], name='Completed Job')
+trace22 = go.Bar(x=KPSdf['KeyProcessStream'], y=KPSdf['Job_Pending'], name='Pending Job')
+layout22 = deepcopy(GRAPH_LAYOUT)
+layout22['title'] = 'KPS wise Job Status' 
+layout22['barmode']='stack'
+
+
 #######################################################################################
 #########################
 #                       #
@@ -101,7 +121,7 @@ layout4 = deepcopy(GRAPH_LAYOUT)
 layout4['title'] = 'Company Linking Distribution'
 pie_fig2 = go.Figure(data=data4, layout=layout4)
 
-
+pie_fig2.update_traces(textinfo='value', marker=dict(line=dict(color='#000000', width=2)))
 
 
 trace6 = go.Bar(x=np.sort(df['Industry Level 1'].unique()), y=df['Industry Level 1'].value_counts().sort_index(), name='Industry')
@@ -218,7 +238,7 @@ app.layout = html.Div(
                     # Also, when setting 'visibility': 'hidden', the insert component will not
                     # show up, which is helpful for generating the intermediate data for the dash.
                 
-                html.H3('Corporate Structure Coverage Expansion to Russell 3K'),
+                html.H3(['Corporate Structure Coverage Expansion to Russell 3K'],style={'color': '#ffffff'}),
                 html.Img(
                     src='data:image/png;base64,{}'.format(encoded_image)
                 )
@@ -243,12 +263,12 @@ app.layout = html.Div(
                                     style=TAB_NORMAL_STYLE,
                                     selected_style=TAB_SELECTED_STYLE,
                                     children=[
-                                        html.Div(
+                                        html.Div(  # Row 1
                                             [                                                
                                                 # Create the graph and table visualizations based on the selection
                                                 html.H5('Total Filers Processed as part of automation:      ' + str(df.shape[0])),
                                                 html.H5('Total Subsidiaries Extracted automatically:        ' + str(df['count previous year'].sum()+df['count current year'].sum())),
-                                                html.Br(),
+                                                #html.Br(),
                                                 html.Hr(),
                                                 html.H5('Automation vs Manual Quantum Distribution'),
                                                 html.Div(
@@ -257,7 +277,8 @@ app.layout = html.Div(
                                                             dcc.Graph(
                                                 
                                                                 id='pie-graph4',
-                                                                figure=pie_fig2
+                                                                figure=pie_fig2 
+                                                                
                                                                 ),
                                                             ],
                                                             className='five columns'
@@ -276,11 +297,15 @@ app.layout = html.Div(
                                                                 ),
                                                         ],
                                                     className='five columns'
-                                                        ),   
-                                                html.Br(),
+                                                        ), 
                                                 
+                                                html.Br(),
+                                                 ],className='twelve columns'
+                                            ),
+                                                #html.Hr(),
                                                 html.Div(
                                                     [
+                                                        html.Hr(),
                                                         html.H5('Overall Extraction Statistics'),
                                                         html.Div( 
                                                         
@@ -321,6 +346,7 @@ app.layout = html.Div(
                                                 
                                                 html.Div(
                                                     [
+                                                        html.Hr(),
                                                         html.H5('Daily Extraction Statistics'),
                                                         
                                                         #html.H6('Average Subsidiaries per Filer: ' + str((df['count previous year'].sum()+df['count current year'].sum())/df.shape[0])),
@@ -374,8 +400,7 @@ app.layout = html.Div(
                                                     className='twelve columns',
                                                     style={'margin-top': 40},
                                                 ),
-                                            ]
-                                        )
+                                           
                                     ],
             
                                 ),
@@ -393,12 +418,13 @@ app.layout = html.Div(
                                                         # Note that the graph and table are created by the callback functions
                                                         html.Div(
                                                             
-                                                            
+                                                            [
                                                             dcc.Graph(
                                                                 className='seven columns',
                                                                 id='pie-graph1',
                                                                 figure=pie_fig
                                                                 ),
+                                                            ]
 
                                                         ),
                                                         html.Div(
@@ -427,7 +453,7 @@ app.layout = html.Div(
                                                         html.Div(
                                                            
                                                             id='pie-graph2',
-                                                            className='four columns',
+                                                            className='five columns',
 
                                                         ),
                                                        
@@ -435,6 +461,22 @@ app.layout = html.Div(
                                                     className='twelve columns',
                                                     style={'margin-top': 40},
                                                 ),
+                                                
+                                                html.Div(
+                                                    
+                                                    [
+                                                       html.Div( 
+                                                           [
+                                                        dcc.Graph(
+                                                        figure={
+                                                            'data': [trace11,trace22],
+                                                            'layout':layout22
+                                                                })
+                                                        ],className='four columns',
+                                                        )
+                                                        ],className='ten columns',
+                                                    
+                                                    ),
                                             ]
                                         )
 
@@ -452,7 +494,7 @@ app.layout = html.Div(
                     style=TAB_NORMAL_STYLE,
                     selected_style=TAB_SELECTED_STYLE,
                     children=[
-                        html.H5('Company Linking Data'),
+                        html.H5(['Company Linking Data'],style={'margin-top': 50},),
                         html.Div(
                             [
                                 dash_table.DataTable(
@@ -467,19 +509,19 @@ app.layout = html.Div(
                                     filter_action="native",
                                     sort_action="native",
                                     sort_mode='multi',
-                                    row_selectable='multi',
+                                    #row_selectable='multi',
                                     row_deletable=False,
                                     selected_rows=[],
                                     page_action='native',
                                     page_current= 0,
                                     page_size= 20,
-                                    style_table=TABLE_STYLE['style_table'],
+                                    #style_table=TABLE_STYLE['style_table'],
                                     style_header=TABLE_STYLE['style_header'],
                                     style_cell=TABLE_STYLE['style_cell']
                                     ),
-                                ],style={'margin-top': 50},
+                                ],
                             ),
-                        
+                        html.Button('Update in Database', id='submit-val', n_clicks=0),
                         html.Div(id='datatable-interactivity-container')
                                     
 
@@ -493,6 +535,10 @@ app.layout = html.Div(
                     children=[
                         html.Div(
                             [
+                        
+                        
+                        html.Div(
+                            [
                                 'Dash is a productive Python framework for building '
                                 'web applications. For detailed information, the "User Guide"'
                                 'is available at ',
@@ -501,15 +547,36 @@ app.layout = html.Div(
                                 ' and ',
                                 html.A('Dash Gallery', href='https://dash.plot.ly/gallery')
                             ],
-                            style={'margin-left': 30, 'margin-top': 20, 'color': 'white'}
-                        )
-                    ]
+                            style={'margin-left': 30, 'margin-top': 20, 'color': 'white'},
+                            className='ten columns',
+                        ),
+                        
+                        html.Div(
+                            [
+                            html.H4('Project Details'),
+                             html.Iframe(id="embedded-pdf", src="assets/Auto Extraction  PIT - Going Forward Approach.pdf",width='100%',height='1000 pt'),
+                             ],className='ten columns',
+                            ),
+                    ],className='ten columns',
+                    ),
+                    ],
                 ),
             ],
             vertical=False
         )
     ]
 )
+
+
+
+
+# @app.callback(Input('submit-val', 'n_clicks'))
+# def update_output( value):
+#     sdf_edited=pd.read_excel (r'Symbol-updated.xlsx')
+#     sdf_edited['CIQID_old']=symboldf['Subsidiary CIQID']
+#     sdf_edited['CIQID Match?'] = np.where(sdf_edited['Subsidiary CIQID'] == sdf_edited['CIQID_old'], 'True', 'False')  #create new column in df1 to check if prices match
+#     sdf_edited.to_excel(r'./Symbol-updated-rows.xlsx', engine='xlsxwriter')
+
 
 @app.callback(
     Output('datatable-interactivity', 'style_data_conditional'),
@@ -545,14 +612,9 @@ def update_graphs(rows):
     else:
         dff.to_excel(r'./Symbol-updated.xlsx', engine='xlsxwriter')
         return [
-            html.P("Symbol Table Updated with new value")
+            html.P("")  # always runs and updates local symbol file
         ]
-        
-
-
-
     
-
 
 
 @app.callback(Output(component_id='descriptive-graph1', component_property='children'),
