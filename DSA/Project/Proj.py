@@ -15,7 +15,9 @@ Created on Thu May 13 01:13:01 2021
 
 # !pip install copy
 # !pip install sqldf
-
+#!pip install dash_bootstrap_components
+#!pip install dpd-static-support
+#!pip install django-plotly-dash
 
 
 import base64
@@ -29,12 +31,20 @@ import dash_table
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
-import statsmodels.formula.api as smf
+#import statsmodels.formula.api as smf
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
+from dash_extensions import Lottie       # pip install dash-extensions
 # import the different styles from styles.py
 from styles import GRAPH_LAYOUT, TABLE_STYLE, TAB_NORMAL_STYLE, TAB_SELECTED_STYLE, white_button_style, red_button_style
+from datetime import date
+import calendar
+import plotly.express as px
 
+mapbox_access_token='pk.eyJ1IjoiYW5tb2xlZGV3YW4iLCJhIjoiY2twb20yaGFoNGN2dTJvbGF5cGFreDUyeiJ9.FcWX-9ylEYKyMjkGutqSHw'
 #import pyodbc
+
+
 
 #########################
 #                       #
@@ -113,15 +123,30 @@ df=pd.read_excel (r'Master File - Presentation.xlsx')
 
 labels4 = ['Add-New','Manual Review','Add-Exist']
 value_list4=[df['Add New Count'].sum(),df['Manual Review Count'].sum(),df['Add Exist Count'].sum()]
+
+kenshoquantdf = pd.DataFrame(
+    dict(category=labels4, action=["Automated", "Manual", "Automated" ],total=["Total Companies Linked","Total Companies Linked","Total Companies Linked"] ,number=value_list4)
+)
+
 trace4 = go.Pie(labels=labels4,
                values=value_list4, hole=.3
                )
 data4 = [trace4]
 layout4 = deepcopy(GRAPH_LAYOUT)
 layout4['title'] = 'Company Linking Distribution'
-pie_fig2 = go.Figure(data=data4, layout=layout4)
+#pie_fig2 = go.Figure(data=data4, layout=layout4)
 
-pie_fig2.update_traces(textinfo='value', marker=dict(line=dict(color='#000000', width=2)))
+pie_fig2 = px.sunburst(kenshoquantdf, path=['total','action', 'category'], values='number', #color='time',
+                       color_discrete_map={'(?)':'black', 'Lunch':'gold', 'Dinner':'darkblue'},labels={"category": "Linking Category"})
+pie_fig2["layout"] =  deepcopy(GRAPH_LAYOUT)
+
+pie_fig2.update_layout(title="Company Linking Distribution", font_color="white",)
+pie_fig2.update_traces(hoverinfo='label',textinfo='label+value+percent entry', marker=dict(line=dict(color='#000000', width=2))) #['label', 'text', 'value', 'current path', 'percent root', 'percent entry', 'percent parent']
+
+
+
+
+
 
 
 trace6 = go.Bar(x=np.sort(df['Industry Level 1'].unique()), y=df['Industry Level 1'].value_counts().sort_index(), name='Industry')
@@ -154,7 +179,7 @@ data5 = [trace5]
 layout5 = deepcopy(GRAPH_LAYOUT)
 layout5['title'] = 'Relationship Ingestion Distribution'
 pie_fig5 = go.Figure(data=data5, layout=layout5)
-
+pie_fig5.update_traces(textinfo='value+percent', marker=dict(line=dict(color='#000000', width=2))) #['label', 'text', 'value', 'percent']
 
 #########################
 #                       #
@@ -199,13 +224,43 @@ def format_options(option_list):
 
 
 
-# get unique values for the categorical variables
 
 
 # load image
 image_filename = 'data/spg_logo.png'
 encoded_image = load_encoded_image(image_filename)
 
+#########################
+#                       #
+# Create the cards      #
+#                       #
+#########################
+#fig24=go.Figure(go.Scattergeo())
+#fig24.update_layout(height=300, margin={"r":0,"t":0,"l":0,"b":0}),
+
+fig24 = go.Figure(
+    go.Scattermapbox(
+        lat=[40.6943],	
+
+        lon=[-73.9249],
+        mode='markers',
+        #hovertemplate= "<extra></extra><em>%{customdata[3]}  </em><br>🚨  %{customdata[0]}<br>🏡  %{customdata[1]}<br>⚰️  %{customdata[2]}",
+        hovertemplate = 'Filers: 19<extra></extra>',
+        marker=go.scattermapbox.Marker(
+            size=[19],
+           # color=tmp['color']
+        )
+    )
+)
+
+# Specify layout information
+fig24.update_layout(
+    mapbox=dict(
+        accesstoken=mapbox_access_token, #
+        center=go.layout.mapbox.Center(lat=45, lon=-73),
+        zoom=1.7
+    )
+)
 
 #########################
 #                       #
@@ -213,20 +268,25 @@ encoded_image = load_encoded_image(image_filename)
 #                       #
 #########################
 
-app = dash.Dash()
+url_filers_in = "https://assets4.lottiefiles.com/packages/lf20_i4bqu8fz.json"
+url_companies = "https://assets9.lottiefiles.com/packages/lf20_EzPrWM.json"
+url_calstart = "https://assets8.lottiefiles.com/private_files/lf30_qkroghd7.json"
+url_calend= "https://assets8.lottiefiles.com/private_files/lf30_yzu4wlv9.json"
 
-# You can load an external css file in the following way
-#app.css.append_css({"external_url": "https://altd-dev.s3.amazonaws.com/dash/style.css"})
-# You can also provide local css files in the assets folder.
-# In this case, the css files I put in the remote s3 storage and here in the assets folder are the same.
-# You may use the external css in s3 as a baseline and override certain settings with local css files.
+options = dict(loop=True, autoplay=True, rendererSettings=dict(preserveAspectRatio='xMidYMid slice'))
+
+app = dash.Dash(__name__)
+#app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
 
 
+
+app.title = 'HM Coverage Expansion'
 
 
 app.scripts.config.serve_locally = True
 
-app.layout = html.Div(
+app.layout = dbc.Container([
+    html.Div(
     [
         # Header with S&P logo
         html.Div(
@@ -264,80 +324,153 @@ app.layout = html.Div(
                                     selected_style=TAB_SELECTED_STYLE,
                                     children=[
                                         html.Div(  # Row 1
-                                            [                                                
-                                                # Create the graph and table visualizations based on the selection
-                                                html.H5('Total Filers Processed as part of automation:      ' + str(df.shape[0])),
-                                                html.H5('Total Subsidiaries Extracted automatically:        ' + str(df['count previous year'].sum()+df['count current year'].sum())),
-                                                #html.Br(),
-                                                html.Hr(),
-                                                html.H5('Automation vs Manual Quantum Distribution'),
-                                                html.Div(
+                                            [     
+                                                
+                                                    dbc.Row(
+                                                        [
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    dbc.CardHeader(Lottie(options=options, width="18%", height="18%", url=url_calstart)),
+                                                                    dbc.CardBody([
+                                                                        html.P('Select Date Range'),
+                                                                        dcc.DatePickerSingle(
+                                                                                id='my-date-picker-start',
+                                                                                date=date(2018, 1, 1),
+                                                                               
+                                                                                ),
+                                                                        dcc.DatePickerSingle(
+                                                                        id='my-date-picker-end',
+                                                                        date=date(2021, 4, 4),
+                                                                        
+                                                                        ),
+                                                                        ], style={'textAlign':'center'})
+                                                                    ], color="dark", inverse=True),
+                                                                ], width=4),
                                                             
-                                                    [
-                                                            dcc.Graph(
+                                                            
+                                                            
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    dbc.CardHeader(Lottie(options=options, width="25%", height="25%", url=url_filers_in)),
+                                                                    dbc.CardBody([
+                                                                        html.P('Filers Automated'),
+                                                                        html.H6(str(df.shape[0]))
+                                                                        ], style={'textAlign':'center'})
+                                                                    ],color="dark", inverse=True ),
+                                                                ], width=4),
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    dbc.CardHeader(Lottie(options=options, width="25%", height="25%", url=url_companies)),
+                                                                    dbc.CardBody([
+                                                                        html.P('Total Subsidiaries Extracted'),
+                                                                        html.H6(str(df['count previous year'].sum()+df['count current year'].sum()))
+                                                                        ], style={'textAlign':'center'})
+                                                                    ],color="dark", inverse=True),
+                                                                ], width=4),
+                                                            
+                                                          
+                                                            
+                                                            
+                                                             ],justify="center",
+                                                        ),
+                                                           
+                                                
+                                             
+                                               
+                                                html.H5('Automation vs Manual Quantum Distribution'),
+                                               
+                                                dbc.Row(
+                                                        [
+                                                              
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    #dbc.CardHeader(html.P("Company Linking Distribution"), style={'textAlign':'center'}),
+                                                                    dbc.CardBody([
+                                                                        
+                                                                         dcc.Graph(
                                                 
                                                                 id='pie-graph4',
                                                                 figure=pie_fig2 
                                                                 
                                                                 ),
-                                                            ],
-                                                            className='five columns'
-                                                        ),
-                                               
-                                                html.Div(
-                                                    className='one columns'
-                                                    ),
-                                                
-                                                html.Div(
-                                                    [
-                                                            dcc.Graph(
+                                                                       
+                                                                        ], style={'textAlign':'center'})
+                                                                    ],color="info", inverse=False ),
+                                                                ], width=6),
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    #dbc.CardHeader(Lottie(options=options, width="25%", height="25%", url=url_companies)),
+                                                                    dbc.CardBody([
+                                                                        
+                                                                        dcc.Graph(
                                                 
                                                                 id='pie-graph5',
                                                                 figure=pie_fig5
                                                                 ),
-                                                        ],
-                                                    className='five columns'
-                                                        ), 
+                                                                        
+                                                                        ], style={'textAlign':'center'})
+                                                                    ],color="info", inverse=False),
+                                                                ], width=6),
+                                                            
+                                                          
+                                                            
+                                                            
+                                                             ],justify="center",
+                                                        ),
                                                 
+                                               
+                                                
+                                                
+                                                                                               
                                                 html.Br(),
                                                  ],className='twelve columns'
                                             ),
-                                                #html.Hr(),
+                                               # html.Hr(),
                                                 html.Div(
                                                     [
-                                                        html.Hr(),
+                                                        #html.Hr(),
                                                         html.H5('Overall Extraction Statistics'),
-                                                        html.Div( 
                                                         
-                                                            [
-                                                            #######Table here
-                                                            dash_table.DataTable(
-                                                                
-                                                                data=dfg.to_dict('records'),
-                                                                columns=[{'id': c, 'name': c} for c in dfg.columns],
-                                                                style_header={'backgroundColor': 'rgb(30, 30, 30)', 'font_size': '16px'},
-                                                                style_cell={'backgroundColor': 'rgb(50, 50, 50)',
-                                                                            'font_size': '14px',
-                                                                            'color': 'white'
-                                                                            },
-                                                                )
+                                                        
+                                                        dbc.Row(
+                                                        [
+                                                              
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    dbc.CardHeader(
+                                                                        dbc.Tabs(
+                                                                        [
+                                                                            dbc.Tab(label="Industry Level Table view", tab_id="tab-1",label_style={"color": "#222222"}),
+                                                                            dbc.Tab(label="Industry Level Chart-view", tab_id="tab-2",label_style={"color": "#222222"}),
+                                                                            ],
+                                                                        id="card-tabs",
+                                                                        card=True,
+                                                                        active_tab="tab-1",
+                                                                        )),
+                                                                    dbc.CardBody( id="card-content")
+                                                                    ],color="info", inverse=False ),
+                                                                ], width=6),
+                                                            dbc.Col([
+                                                                dbc.Card([
+                                                                    dbc.CardHeader(html.H6("Country-wise Map View", style={'textAlign':'center',"color": "#222222"})),
+                                                                    dbc.CardBody([
+                                                                        dcc.Graph(
+                                                                        figure = fig24
+                                                                        ),
                                                                     
-                                                            #################
-                                                            ],
-                                                             className='three columns',
-                                                             style={'margin-top': 100},
-                                                        ),
-                                                        html.Div( 
-                                                            [
-                                                            dcc.Graph(
-                                                             figure={
-                                                                 'data': [trace6],
-                                                                 'layout':layout6
-                                                                 }),
+                                                                        
+                                                                        ], style={'textAlign':'center'})
+                                                                    ],color="info", inverse=False),
+                                                                ], width=6),
                                                             
-                                                            ],
-                                                             className='eight columns',
+                                                          
+                                                            
+                                                            
+                                                             ],justify="center",
                                                         ),
+                                                        
+                                                        
+                                                        
                                                         
                                                         ],
                                                     className='twelve columns',
@@ -346,7 +479,7 @@ app.layout = html.Div(
                                                 
                                                 html.Div(
                                                     [
-                                                        html.Hr(),
+                                                        #html.Hr(),
                                                         html.H5('Daily Extraction Statistics'),
                                                         
                                                         #html.H6('Average Subsidiaries per Filer: ' + str((df['count previous year'].sum()+df['count current year'].sum())/df.shape[0])),
@@ -371,25 +504,12 @@ app.layout = html.Div(
                                                        # html.br(),
                                                         # Note that the graph and table are created by the callback functions
                                                         html.Div(
-                                                            # the 'id' for the component is important
-                                                            # when using this component as input or
-                                                            # generating this component as output in
-                                                            # the following functions.
-                                                            # this has to be identical.
+                                                        
                                                             id='descriptive-graph1',
                                                             className='five columns',
 
                                                         ),
-                                                        # html.Div(
-                                                        #     [
-                                                        #     html.Img(
-                                                        #         src='data:image/png;base64,{}'.format(encoded_image),
-                                                        #         style={'visibility': 'hidden'}
-                                                        #         ), 
-                                                        #     ],
-                                                        #     className='one column',
-                                                          
-                                                        # ),
+                                                 
                                                           html.Div(
                                                               id='descriptive-table1',
                                                               className='four columns',
@@ -539,13 +659,13 @@ app.layout = html.Div(
                         
                         html.Div(
                             [
-                                'Dash is a productive Python framework for building '
-                                'web applications. For detailed information, the "User Guide"'
-                                'is available at ',
-                                # add the external webpages
-                                html.A('Dash User Guide', href='https://dash.plot.ly/'),
-                                ' and ',
-                                html.A('Dash Gallery', href='https://dash.plot.ly/gallery')
+                                # 'Dash is a productive Python framework for building '
+                                # 'web applications. For detailed information, the "User Guide"'
+                                # 'is available at ',
+                                # # add the external webpages
+                                # html.A('Dash User Guide', href='https://dash.plot.ly/'),
+                                # ' and ',
+                                # html.A('Dash Gallery', href='https://dash.plot.ly/gallery')
                             ],
                             style={'margin-left': 30, 'margin-top': 20, 'color': 'white'},
                             className='ten columns',
@@ -554,7 +674,7 @@ app.layout = html.Div(
                         html.Div(
                             [
                             html.H4('Project Details'),
-                             html.Iframe(id="embedded-pdf", src="assets/Auto Extraction  PIT - Going Forward Approach.pdf",width='100%',height='1000 pt'),
+                             html.Iframe(id="embedded-pdf", src="assets/Auto Extraction  PIT - Going Forward Approach.pdf",width='80vh',height='100vh'),
                              ],className='ten columns',
                             ),
                     ],className='ten columns',
@@ -566,9 +686,31 @@ app.layout = html.Div(
         )
     ]
 )
+    ], fluid=True)
 
 
-
+@app.callback(
+    Output("card-content", "children"), [Input("card-tabs", "active_tab")]
+)
+def tab_content(active_tab):
+    if str(active_tab)=='tab-1':
+        return dash_table.DataTable(
+            data=dfg.to_dict('records'),
+            columns=[{'id': c, 'name': c} for c in dfg.columns],
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'font_size': '16px'},
+            style_cell={'backgroundColor': 'rgb(50, 50, 50)',
+                        'font_size': '14px',
+                        'color': 'white'
+                        },
+            )
+    else:
+        return dcc.Graph(
+            figure={
+                'data': [trace6],
+                'layout':layout6
+                })
+    
+    
 
 # @app.callback(Input('submit-val', 'n_clicks'))
 # def update_output( value):
@@ -578,29 +720,12 @@ app.layout = html.Div(
 #     sdf_edited.to_excel(r'./Symbol-updated-rows.xlsx', engine='xlsxwriter')
 
 
-@app.callback(
-    Output('datatable-interactivity', 'style_data_conditional'),
-    Input('datatable-interactivity', 'selected_columns')
-)
-def update_styles(selected_columns):
-    return [{
-        'if': { 'column_id': i },
-        'background_color': '#D2F3FF'
-    } for i in selected_columns]
+
 
 @app.callback(
     Output('datatable-interactivity-container', "children"),
     Input('datatable-interactivity', "derived_virtual_data"))
 def update_graphs(rows):
-    # When the table is first rendered, `derived_virtual_data` and
-    # `derived_virtual_selected_rows` will be `None`. This is due to an
-    # idiosyncrasy in Dash (unsupplied properties are always None and Dash
-    # calls the dependent callbacks when the component is first rendered).
-    # So, if `rows` is `None`, then the component was just rendered
-    # and its value will be the same as the component's dataframe.
-    # Instead of setting `None` in here, you could also set
-    # `derived_virtual_data=df.to_rows('dict')` when you initialize
-    # the component.
     
 
     dff = symboldf if rows is None else pd.DataFrame(rows)
@@ -673,7 +798,7 @@ def create_descriptive_graph2(selection2):
 
 # if run this code on jupyter notebook, please change 'debug=False'.
 if __name__ == '__main__':
-    app.run_server(debug=False,port='8090')
+    app.run_server(debug=True,port='8090',use_reloader=False)
 
 
 
